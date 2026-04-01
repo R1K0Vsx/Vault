@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>R1K0VxNEBULA · Vault</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&family=Rajdhani:wght@300;400;500;600&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#000000;color:#fff8e8;font-family:'Rajdhani',sans-serif;min-height:100vh;overflow-x:hidden}
+canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
+.app{position:relative;z-index:1;min-height:100vh}
+
+/* ── LOGIN ── */
+#login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:2rem}
+.login-card{background:rgba(0,0,0,0.95);border:1px solid rgba(200,150,0,0.25);border-radius:20px;padding:3rem 2.5rem;width:100%;max-width:400px;backdrop-filter:blur(20px)}
+.logo{text-align:center;margin-bottom:2.5rem}
+.logo-icon{font-size:2.8rem;display:block;margin-bottom:.5rem;filter:drop-shadow(0 0 14px rgba(100,180,255,.9))}
+.brand{font-family:'Orbitron',monospace;font-size:1rem;font-weight:700;letter-spacing:3px;background:linear-gradient(135deg,#f0a800,#ffe066);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.brand span{-webkit-text-fill-color:rgba(255,255,255,.3)}
+.logo-sub{font-size:.7rem;color:rgba(200,160,50,.45);letter-spacing:3px;text-transform:uppercase;margin-top:.3rem}
+
+.tabs{display:flex;gap:0;margin-bottom:2rem;border:1px solid rgba(200,150,0,0.2);border-radius:10px;overflow:hidden}
+.tab{flex:1;padding:.6rem;text-align:center;font-family:'Orbitron',monospace;font-size:.65rem;letter-spacing:2px;cursor:pointer;transition:all .2s;color:rgba(200,160,50,.5);background:transparent;border:none}
+.tab.active{background:rgba(120,80,0,.5);color:#ffd060}
+
+.field{margin-bottom:1.1rem}
+.field label{display:block;font-size:.75rem;letter-spacing:2px;color:rgba(200,160,50,.6);text-transform:uppercase;margin-bottom:.4rem}
+.field input{width:100%;background:rgba(20,40,80,.6);border:1px solid rgba(80,140,255,.3);border-radius:10px;color:#fff0c0;font-family:'Rajdhani',sans-serif;font-size:1rem;padding:.72rem 1rem;outline:none;transition:border-color .2s}
+.field input:focus{border-color:rgba(220,170,0,.7)}
+.btn-enter{width:100%;margin-top:.4rem;padding:.82rem;background:linear-gradient(135deg,#a06800,#c88000);border:none;border-radius:10px;color:#fff0c0;font-family:'Orbitron',monospace;font-size:.78rem;font-weight:600;letter-spacing:3px;cursor:pointer;transition:all .2s}
+.btn-enter:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(200,140,0,.35)}
+.btn-enter:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.login-error{color:#ff7070;font-size:.8rem;text-align:center;margin-top:.65rem;display:none}
+
+/* ── DASHBOARD ── */
+#dashboard{display:none;min-height:100vh;flex-direction:column}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:.85rem 1.5rem;background:rgba(0,0,0,0.97);border-bottom:1px solid rgba(80,140,255,.12);backdrop-filter:blur(20px);position:sticky;top:0;z-index:10}
+.topbar-left{display:flex;align-items:center;gap:.8rem}
+.topbar-brand{font-family:'Orbitron',monospace;font-size:.88rem;font-weight:700;letter-spacing:2px;background:linear-gradient(135deg,#f0a800,#ffe066);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.topbar-brand span{-webkit-text-fill-color:rgba(255,255,255,.3)}
+.role-badge{font-size:.65rem;letter-spacing:2px;padding:.25rem .7rem;border-radius:50px;font-family:'Orbitron',monospace}
+.role-badge.admin{background:rgba(200,140,0,.15);border:1px solid rgba(220,160,0,.4);color:#ffd060}
+.role-badge.guest{background:rgba(60,180,100,.1);border:1px solid rgba(60,180,100,.3);color:#80e0a0}
+.btn-logout{background:transparent;border:1px solid rgba(200,150,0,0.25);border-radius:8px;color:rgba(200,160,50,.6);font-family:'Rajdhani',sans-serif;font-size:.78rem;letter-spacing:1px;padding:.3rem .8rem;cursor:pointer;transition:all .2s}
+.btn-logout:hover{border-color:rgba(255,100,100,.5);color:#ff9090}
+
+.main{padding:1.8rem 1.5rem;flex:1}
+.sec-title{font-family:'Orbitron',monospace;font-size:.68rem;letter-spacing:3px;color:rgba(190,145,0,.52);text-transform:uppercase;margin-bottom:1rem;display:flex;align-items:center;gap:.7rem}
+.sec-title::after{content:'';flex:1;height:1px;background:rgba(180,130,0,.15)}
+
+/* UPLOAD (solo admin) */
+#upload-section{margin-bottom:2rem}
+.upload-zone{border:2px dashed rgba(180,130,0,.28);border-radius:16px;padding:1.8rem 1rem;text-align:center;cursor:pointer;transition:all .25s;background:rgba(10,25,60,.28)}
+.upload-zone:hover,.upload-zone.drag{border-color:rgba(220,170,0,.55);background:rgba(20,15,0,.8)}
+.uz-icon{font-size:2rem;margin-bottom:.5rem}
+.upload-zone p{color:rgba(200,160,50,.55);font-size:.88rem}
+.upload-zone p strong{color:#ffc840}
+.progress-wrap{margin-top:.8rem;display:none}
+.progress-bar{height:3px;background:rgba(80,140,255,.15);border-radius:4px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,#a06800,#f0c000);width:0%;transition:width .3s;border-radius:4px}
+.progress-txt{font-size:.76rem;color:rgba(200,160,50,.55);margin-top:.4rem}
+
+/* FILES */
+.files-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.9rem}
+.file-card{background:rgba(0,0,0,0.85);border:1px solid rgba(200,150,0,0.13);border-radius:14px;padding:1.1rem;display:flex;flex-direction:column;gap:.5rem;transition:all .25s}
+.file-card:hover{border-color:rgba(100,180,255,.4);background:rgba(10,10,10,.9);transform:translateY(-3px);box-shadow:0 8px 28px rgba(180,130,0,.18)}
+.file-icon{font-size:2rem}
+.file-name{font-size:.88rem;font-weight:500;color:#fff0c0;word-break:break-word;line-height:1.3}
+.file-meta{font-size:.71rem;color:rgba(190,145,0,.45)}
+.file-actions{display:flex;gap:.4rem;margin-top:.2rem}
+.btn-dl{flex:1;padding:.4rem;border-radius:8px;font-family:'Rajdhani',sans-serif;font-size:.74rem;letter-spacing:.8px;cursor:pointer;transition:all .18s;text-align:center;border:1px solid rgba(200,150,0,0.22);background:rgba(120,80,0,.42);color:#ffbe30}
+.btn-dl:hover{background:rgba(160,100,0,.62);border-color:rgba(220,170,0,.5);color:#fff0c0}
+.btn-rm{padding:.4rem .7rem;border-radius:8px;font-family:'Rajdhani',sans-serif;font-size:.74rem;cursor:pointer;transition:all .18s;text-align:center;border:1px solid rgba(200,60,60,.22);background:rgba(100,20,20,.32);color:#ff9090}
+.btn-rm:hover{background:rgba(160,30,30,.52);border-color:rgba(255,80,80,.42)}
+.empty-state{text-align:center;padding:3rem 1rem;color:rgba(190,145,0,.35);font-size:.88rem;grid-column:1/-1}
+
+#toast{position:fixed;bottom:1.5rem;right:1.5rem;background:rgba(10,40,100,.96);border:1px solid rgba(220,170,0,0.35);border-radius:12px;padding:.65rem 1.1rem;font-size:.84rem;color:#ffd060;z-index:999;opacity:0;transform:translateY(8px);transition:all .3s;pointer-events:none}
+#toast.show{opacity:1;transform:translateY(0)}
+#toast.err{border-color:rgba(255,80,80,.5);color:#ff9090}
+#file-input{display:none}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<div class="app">
+
+  <!-- LOGIN -->
+  <div id="login-screen">
+    <div class="login-card">
+      <div class="logo">
+        <span class="logo-icon">🔐</span>
+        <div class="brand">R1K0Vx<span>·</span>VAULT</div>
+        <div class="logo-sub">Acceso seguro de archivos</div>
+      </div>
+
+      <div class="tabs">
+        <button class="tab active" id="tab-guest" onclick="switchTab('guest')">VISITANTE</button>
+        <button class="tab" id="tab-admin" onclick="switchTab('admin')">ADMIN</button>
+      </div>
+
+      <!-- Guest fields -->
+      <div id="guest-fields">
+        <div class="field">
+          <label>Contraseña de acceso</label>
+          <input id="inp-guest-pass" type="password" placeholder="••••••••">
+        </div>
+        <button class="btn-enter" onclick="guestLogin()">ENTRAR</button>
+      </div>
+
+      <!-- Admin fields -->
+      <div id="admin-fields" style="display:none">
+        <div class="field">
+          <label>Email</label>
+          <input id="inp-admin-email" type="email" placeholder="tu@email.com">
+        </div>
+        <div class="field">
+          <label>Contraseña</label>
+          <input id="inp-admin-pass" type="password" placeholder="••••••••">
+        </div>
+        <button class="btn-enter" id="btn-admin-login" onclick="adminLogin()">ENTRAR</button>
+      </div>
+
+      <div class="login-error" id="err-msg">Contraseña incorrecta.</div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="dashboard">
+    <nav class="topbar">
+      <div class="topbar-left">
+        <span class="topbar-brand">✦ R1K0Vx<span>·</span>VAULT</span>
+        <span class="role-badge" id="role-badge">GUEST</span>
+      </div>
+      <button class="btn-logout" onclick="doLogout()">SALIR</button>
+    </nav>
+
+    <div class="main">
+      <!-- Solo visible para admin -->
+      <div id="upload-section" style="display:none">
+        <div class="sec-title">Subir archivos</div>
+        <div class="upload-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+          <div class="uz-icon">⬆</div>
+          <p>Arrastra archivos aquí o <strong>haz clic para seleccionar</strong></p>
+          <div class="progress-wrap" id="progress-wrap">
+            <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+            <p class="progress-txt" id="progress-txt">Subiendo...</p>
+          </div>
+        </div>
+        <input type="file" id="file-input" multiple>
+      </div>
+
+      <div class="sec-title">Archivos disponibles</div>
+      <div class="files-grid" id="files-grid">
+        <div class="empty-state">Cargando archivos...</div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+// ── Config ────────────────────────────────────────
+const SUPA_URL    = "https://pvehxvjksimqmqeggedi.supabase.co";
+const SUPA_KEY    = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB2ZWh4dmprc2ltcW1xZWdnZWRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwMTgwMzQsImV4cCI6MjA5MDU5NDAzNH0.uIUzbhsOEUbZ7KHcaJsnJD6BpTXWHszlnt86PDqvQYk";
+const BUCKET      = "vault";           // bucket nuevo, público para lectura
+const GUEST_PASS  = "1234";           // contraseña para visitantes
+const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+let isAdmin = false;
+
+// ── Partículas ────────────────────────────────────
+const canvas = document.getElementById('cv');
+const ctx = canvas.getContext('2d');
+let W,H,stars=[],nebulas=[];
+function resize(){W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight}
+function initStars(){
+  stars=[];
+  for(let i=0;i<220;i++) stars.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.5+.3,alpha:Math.random()*.7+.1,speed:Math.random()*.16+.03,drift:(Math.random()-.5)*.1,tw:Math.random()*Math.PI*2,tws:Math.random()*.016+.004});
+  nebulas=[];
+}
+function animFrame(){
+  ctx.clearRect(0,0,W,H);
+  nebulas.forEach(n=>{const g=ctx.createRadialGradient(n.x,n.y,0,n.x,n.y,n.r);g.addColorStop(0,n.col+n.a+')');g.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(n.x,n.y,n.r,0,Math.PI*2);ctx.fill()});
+  stars.forEach(s=>{s.tw+=s.tws;const ta=s.alpha*(.6+.4*Math.sin(s.tw));s.y-=s.speed;s.x+=s.drift;if(s.y<-2){s.y=H+2;s.x=Math.random()*W}if(s.x<-2)s.x=W+2;if(s.x>W+2)s.x=-2;ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fillStyle=`rgba(255,255,255,${ta})`;ctx.fill();if(s.r>1.1){ctx.beginPath();ctx.arc(s.x,s.y,s.r*2.4,0,Math.PI*2);ctx.fillStyle=`rgba(255,255,255,${ta*.08})`;ctx.fill()}});
+  requestAnimationFrame(animFrame);
+}
+window.addEventListener('resize',()=>{resize();initStars()});
+resize();initStars();animFrame();
+
+// ── Tabs ──────────────────────────────────────────
+function switchTab(tab){
+  document.getElementById('tab-guest').classList.toggle('active', tab==='guest');
+  document.getElementById('tab-admin').classList.toggle('active', tab==='admin');
+  document.getElementById('guest-fields').style.display = tab==='guest'?'block':'none';
+  document.getElementById('admin-fields').style.display = tab==='admin'?'block':'none';
+  document.getElementById('err-msg').style.display='none';
+}
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'){
+    if(document.getElementById('guest-fields').style.display!=='none') guestLogin();
+    else adminLogin();
+  }
+});
+
+// ── Auth ──────────────────────────────────────────
+function guestLogin(){
+  const pass = document.getElementById('inp-guest-pass').value;
+  if(pass === GUEST_PASS){
+    isAdmin = false;
+    sessionStorage.setItem('vault_access','guest');
+    showDashboard();
+  } else {
+    document.getElementById('err-msg').style.display='block';
+  }
+}
+
+async function adminLogin(){
+  const email = document.getElementById('inp-admin-email').value.trim();
+  const pass  = document.getElementById('inp-admin-pass').value;
+  const btn   = document.getElementById('btn-admin-login');
+  const err   = document.getElementById('err-msg');
+  err.style.display='none';
+  btn.disabled=true; btn.textContent='CONECTANDO...';
+  const {data,error} = await sb.auth.signInWithPassword({email,password:pass});
+  btn.disabled=false; btn.textContent='ENTRAR';
+  if(error){ err.style.display='block'; return; }
+  isAdmin = true;
+  sessionStorage.setItem('vault_access','admin');
+  showDashboard();
+}
+
+function doLogout(){
+  if(isAdmin) sb.auth.signOut();
+  isAdmin=false;
+  sessionStorage.removeItem('vault_access');
+  document.getElementById('dashboard').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('inp-guest-pass').value='';
+  document.getElementById('inp-admin-pass').value='';
+}
+
+function showDashboard(){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('dashboard').style.display='flex';
+  const badge = document.getElementById('role-badge');
+  const uploadSec = document.getElementById('upload-section');
+  if(isAdmin){
+    badge.textContent='ADMIN'; badge.className='role-badge admin';
+    uploadSec.style.display='block';
+  } else {
+    badge.textContent='GUEST'; badge.className='role-badge guest';
+    uploadSec.style.display='none';
+  }
+  loadFiles();
+}
+
+// Auto-login si hay sesión guardada
+const savedAccess = sessionStorage.getItem('vault_access');
+if(savedAccess==='guest'){ isAdmin=false; showDashboard(); }
+else if(savedAccess==='admin'){
+  sb.auth.getSession().then(({data:{session}})=>{
+    if(session){ isAdmin=true; showDashboard(); }
+    else sessionStorage.removeItem('vault_access');
+  });
+}
+
+// ── Helpers ───────────────────────────────────────
+function formatSize(b){if(!b||b<1024)return(b||0)+' B';if(b<1048576)return(b/1024).toFixed(1)+' KB';if(b<1073741824)return(b/1048576).toFixed(1)+' MB';return(b/1073741824).toFixed(2)+' GB'}
+function formatDate(ts){if(!ts)return'';return new Date(ts).toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'})}
+function fileIcon(name){const ext=(name.split('.').pop()||'').toLowerCase();const m={pdf:'📄',doc:'📝',docx:'📝',xls:'📊',xlsx:'📊',ppt:'📋',pptx:'📋',zip:'🗜',rar:'🗜',mp3:'🎵',wav:'🎵',flac:'🎵',mp4:'🎬',avi:'🎬',mkv:'🎬',mov:'🎬',jpg:'🖼',jpeg:'🖼',png:'🖼',gif:'🖼',webp:'🖼',svg:'🖼',py:'🐍',js:'⚙',ts:'⚙',html:'🌐',css:'🎨',json:'📦',txt:'📝',md:'📝',sh:'⚙',exe:'💾'};return m[ext]||'📁'}
+
+let FILES=[];
+
+// ── Cargar archivos ───────────────────────────────
+async function loadFiles(){
+  // Los archivos están en la raíz del bucket (sin subcarpetas)
+  const {data,error} = await sb.storage.from(BUCKET).list('', {sortBy:{column:'created_at',order:'desc'}});
+  if(error){ renderFiles([]); return; }
+  FILES = (data||[]).filter(f=>f.name&&f.name!=='.emptyFolderPlaceholder'&&f.name!=='.keep');
+  renderFiles(FILES);
+}
+
+function renderFiles(list){
+  const grid = document.getElementById('files-grid');
+  grid.innerHTML='';
+  if(!list.length){
+    grid.innerHTML='<div class="empty-state">No hay archivos disponibles aún.</div>';
+    return;
+  }
+  list.forEach((f,i)=>{
+    const card=document.createElement('div');
+    card.className='file-card';
+    const rmBtn = isAdmin ? `<button class="btn-rm" onclick="deleteFile(${i})">✕</button>` : '';
+    card.innerHTML=`<div class="file-icon">${fileIcon(f.name)}</div><div class="file-name">${f.name}</div><div class="file-meta">${formatSize(f.metadata?.size)} · ${formatDate(f.created_at)}</div><div class="file-actions"><button class="btn-dl" onclick="downloadFile(${i})">⬇ DESCARGAR</button>${rmBtn}</div>`;
+    grid.appendChild(card);
+  });
+}
+
+// ── Descargar ─────────────────────────────────────
+async function downloadFile(i){
+  const f=FILES[i];
+  toast(`Descargando "${f.name}"...`);
+  const {data,error}=await sb.storage.from(BUCKET).download(f.name);
+  if(error){toast('Error al descargar',true);return}
+  const url=URL.createObjectURL(data);
+  const a=document.createElement('a');
+  a.href=url;a.download=f.name;
+  document.body.appendChild(a);a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+
+// ── Eliminar (solo admin) ─────────────────────────
+async function deleteFile(i){
+  const f=FILES[i];
+  const {error}=await sb.storage.from(BUCKET).remove([f.name]);
+  if(error){toast('Error al eliminar',true);return}
+  toast(`"${f.name}" eliminado`);
+  loadFiles();
+}
+
+// ── Subir (solo admin) ────────────────────────────
+async function uploadFiles(fileList){
+  const prog=document.getElementById('progress-wrap');
+  const fill=document.getElementById('progress-fill');
+  const txt=document.getElementById('progress-txt');
+  const zone=document.getElementById('drop-zone');
+  zone.style.pointerEvents='none';zone.style.opacity='.6';
+  prog.style.display='block';
+  let done=0,total=fileList.length;
+  for(const file of Array.from(fileList)){
+    txt.textContent=`Subiendo "${file.name}" (${done+1}/${total})...`;
+    fill.style.width=Math.round((done/total)*100)+'%';
+    const {error}=await sb.storage.from(BUCKET).upload(file.name,file,{upsert:true});
+    if(error){toast(`Error: ${error.message}`,true);console.error(error);}
+    else done++;
+  }
+  fill.style.width='100%';
+  setTimeout(()=>{prog.style.display='none';fill.style.width='0%';zone.style.pointerEvents='';zone.style.opacity='';},600);
+  toast(done===1?'Archivo subido ✓':`${done} archivos subidos ✓`);
+  loadFiles();
+}
+
+document.getElementById('file-input').addEventListener('change',e=>{if(e.target.files.length)uploadFiles(e.target.files);e.target.value=''});
+const dz=document.getElementById('drop-zone');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag')});
+dz.addEventListener('dragleave',()=>dz.classList.remove('drag'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag');if(e.dataTransfer.files.length)uploadFiles(e.dataTransfer.files)});
+
+// ── Toast ─────────────────────────────────────────
+let toastTimer;
+function toast(msg,isErr=false){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='show'+(isErr?' err':'');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.className='',3000);
+}
+</script>
+</body>
+</html>
